@@ -4,6 +4,11 @@ import com.example.todoapp.data.model.Task
 //Intent osztály, amely az alkalmazás műveleteit összegyűjti, amelyekkel a felhasználó
 //kapcsolatba léphet
 sealed class TaskIntent {
-    data class AddTask(val task: Task) : TaskIntent()
     object LoadTodos : TaskIntent()
+    data class UpdateTaskStatus(val taskId: String, val completed: Boolean) : TaskIntent()
+    data class AddTask(val task: Task) : TaskIntent()
+    object ShowCompletedTasks : TaskIntent()
+    object LoadCompletedTodos : TaskIntent()
+
 }
+

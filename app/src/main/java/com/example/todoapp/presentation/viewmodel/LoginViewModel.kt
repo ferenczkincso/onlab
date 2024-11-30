@@ -22,7 +22,6 @@ class LoginViewModel @Inject constructor(
     private val _isUserLoggedIn = MutableStateFlow(false)
     val isUserLoggedIn: StateFlow<Boolean> = _isUserLoggedIn
 
-    // Felhasználó bejelentkezés email és jelszó alapján
     fun login(email: String, password: String) {
         _isLoading.value = true
         viewModelScope.launch {
@@ -35,26 +34,6 @@ class LoginViewModel @Inject constructor(
             }
         }
     }
-
-    // Felhasználó regisztráció email és jelszó alapján
-    fun register(email: String, password: String, onResult: (AuthResult?, Exception?) -> Unit) {
-        viewModelScope.launch {
-            val result = firebaseService.register(email, password)
-            if (result != null) {
-                onResult(result, null) // Sikeres regisztráció
-            } else {
-                onResult(null, Exception("Registration failed")) // Hiba történt
-            }
-        }
-    }
-    fun logout() {
-        viewModelScope.launch {
-            firebaseService.logout()
-            _isUserLoggedIn.value = false
-        }
-    }
-
-    // Ellenőrzi, hogy a felhasználó be van-e jelentkezve
     fun isUserLoggedIn(): Boolean {
         return firebaseService.isUserLoggedIn()
     }

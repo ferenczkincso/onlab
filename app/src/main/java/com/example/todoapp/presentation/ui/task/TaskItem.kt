@@ -27,7 +27,7 @@ import com.google.firebase.Timestamp
 fun TaskItem(
     task: Task,
     onTaskClick: (Task) -> Unit,
-    onTaskCompleteToggle: (Task) -> Unit
+    onTaskCompleteToggle: (Boolean) -> Unit
 ) {
     Card(
         colors = CardColors(
@@ -78,9 +78,9 @@ fun TaskItem(
         ) {
             Spacer(modifier = Modifier.width(10.dp))
             Checkbox(
-                checked = task.isCompleted,
+                checked = task.completed,
                 enabled = true,
-                onCheckedChange = { onTaskCompleteToggle(task.copy(isCompleted = it)) },
+                onCheckedChange = { isChecked -> onTaskCompleteToggle(isChecked)},
                 colors = CheckboxDefaults.colors(Color.White)
             )
             Spacer(modifier = Modifier.width(15.dp))
@@ -88,7 +88,7 @@ fun TaskItem(
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = task.title,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(10.dp))
@@ -103,22 +103,4 @@ fun TaskItem(
 
         }
     }
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun TaskItemPreview() {
-    TaskItem(
-        task = Task(
-            id = "id1",
-            title = "Buy groceries",
-            description = "Milk, bread, eggs",
-            dueDate = Timestamp.now(),
-            priority = Priority.HIGH,
-            isCompleted = false,
-        ),
-        onTaskClick = {},
-        onTaskCompleteToggle = {}
-    )
 }

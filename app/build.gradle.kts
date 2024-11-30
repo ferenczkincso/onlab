@@ -53,6 +53,8 @@ android {
 }
 
 dependencies {
+    implementation (libs.androidx.foundation)// A fő Foundation könyvtár
+    implementation (libs.material3)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.firebase.firestore.ktx.v2470)
     // Firebase SDK
@@ -71,6 +73,12 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.firebase.auth)
+    implementation(libs.androidx.ui.text.google.fonts)
+    implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.androidx.foundation.layout.android)
     testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter)
     androidTestImplementation(libs.androidx.junit)
@@ -83,6 +91,7 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
 
 }
 kapt {

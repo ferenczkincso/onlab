@@ -1,69 +1,67 @@
 package com.example.todoapp.presentation.ui.task
+
 import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.collectAsState
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.*
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.todoapp.domain.state.TaskState
 import com.example.todoapp.presentation.viewmodel.TaskViewModel
+import java.lang.reflect.Modifier
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.example.todoapp.data.firebase.FirebaseService
-import com.example.todoapp.presentation.ui.theme.customTypography
-import kotlinx.coroutines.launch
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
 import com.example.todoapp.domain.intent.TaskIntent
-import com.example.todoapp.domain.state.TaskState
+import com.example.todoapp.presentation.ui.theme.customTypography
+import kotlinx.coroutines.launch
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskListScreen(
+fun DoneTaskListScreen(
     navController: NavController,
-    viewModel: TaskViewModel = hiltViewModel(),
-    onPomodoroClick: () -> Unit,
+    onBackClick: () -> Unit,
     onLogout: () -> Unit,
-    onAddTaskClick: () -> Unit,
-    onDoneTaskListClick: () -> Unit
+    onPomodoroClick: () -> Unit,
+    viewModel: TaskViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
 
     MaterialTheme(
         typography = customTypography,
     ) {
-        Surface(modifier = Modifier.fillMaxSize()) {
+        Surface(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
             var showDialog by remember { mutableStateOf(false) }
             val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
             val scope = rememberCoroutineScope()
@@ -103,28 +101,28 @@ fun TaskListScreen(
                         onPomodoroClick = onPomodoroClick,
                         onLogoutClick = { showDialog = true },
                         onTaskListClick = { scope.launch { drawerState.close() } },
-                        onDoneTaskListClick = onDoneTaskListClick
+                        onDoneTaskListClick = { scope.launch { drawerState.close() } }
                     )
                 },
                 scrimColor = MaterialTheme.colorScheme.surface.copy(alpha = 1f)
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
                     TaskListHeader(onDrawerOpen = { scope.launch { drawerState.open() } })
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
                         LazyColumn(
-                            modifier = Modifier
+                            modifier = androidx.compose.ui.Modifier
                                 .fillMaxSize()
                                 .padding(top = 0.dp)
                         ) {
                             when (state) {
                                 is TaskState.Loading -> {
                                     item {
-                                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                                        CircularProgressIndicator(modifier = androidx.compose.ui.Modifier.align(Alignment.Center))
                                     }
                                 }
                                 is TaskState.TasksLoaded -> {
                                     val tasksLoaded = state as TaskState.TasksLoaded
-                                    items(tasksLoaded.activeTasks + tasksLoaded.completedTasks) { task ->
+                                    items(tasksLoaded.completedTasks) { task ->
                                         TaskItem(
                                             task = task,
                                             onTaskClick = {
@@ -143,92 +141,11 @@ fun TaskListScreen(
                                 else -> { }
                             }
                         }
-
-                        FloatingActionButton(
-                            onClick = onAddTaskClick,
-                            shape = CircleShape,
-                            contentColor = Color.White,
-                            containerColor = Color(0xFF65647C),
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(16.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.Add, contentDescription = "Add Task")
-                        }
                     }
                 }
             }
         }
     }
 }
-
-@Composable
-fun DrawerContent(
-    onPomodoroClick: () -> Unit,
-    onLogoutClick: () -> Unit,
-    onTaskListClick: () -> Unit,
-    onDoneTaskListClick: () -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        item {
-            DrawerTaskItem(
-                title = "Task List",
-                onClick = onTaskListClick
-            )
-        }
-        item {
-            DrawerTaskItem(
-                title = "Pomodoro counter",
-                onClick = onPomodoroClick
-            )
-        }
-        item{
-            DrawerTaskItem(
-                title = "Done tasks list",
-                onClick = onDoneTaskListClick
-            )
-        }
-        item {
-            DrawerTaskItem(
-                title = "Log out",
-                onClick = onLogoutClick
-            )
-        }
-    }
-}
-
-@Composable
-fun DrawerTaskItem(
-    title: String,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .border(
-                width = 2.dp,
-                color = Color(0xFF8B7E74),
-                shape = MaterialTheme.shapes.medium
-            )
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(16.dp)
-            .clickable { onClick() }
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            color = Color(0xFF8B7E74),
-            fontSize = 16.sp,
-            modifier = Modifier.align(Alignment.CenterStart)
-        )
-    }
-}
-
-
 
 

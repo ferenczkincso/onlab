@@ -5,6 +5,9 @@ import com.example.todoapp.data.model.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 //FirebaseService függvényeit hívja meg minden függvény
@@ -14,8 +17,11 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class TaskRepository @Inject constructor(
-    private val firebaseService: FirebaseService
+    val firebaseService: FirebaseService
 ) {
+    fun getUserId(): String? {
+        return firebaseService.getCurrentUserId()
+    }
 
     suspend fun getUserTasks(): List<Task>? {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return null // Ellenőrizd, hogy a felhasználó hitelesítve van-e
@@ -43,32 +49,34 @@ class TaskRepository @Inject constructor(
     }
 
 
-
-    suspend fun addTask(task: Task) {
+    suspend fun addTask(task: Task): Boolean {
         val currentUser = FirebaseAuth.getInstance().currentUser
 
-        if (currentUser != null) {
+        return if (currentUser != null) {
             val userId = currentUser.uid
 
             // Új feladat létrehozása a bejelentkezett felhasználó UID-jával
-            val newTask = task.copy(userId = userId)  // a Task példányhoz hozzáadjuk a userId-t
+            val newTask = task.copy(userId = userId)
 
-            // Feladat mentése a Firestore-ba a "users" gyűjteményen belül
-            Firebase.firestore.collection("users")
-                .document(userId)
-                .collection("todos")  // itt a felhasználó saját feladatai tárolódnak
-                .add(newTask)
-                .addOnSuccessListener {
-                    Log.d("TaskRepository", "Task successfully added!")
-                }
-                .addOnFailureListener { e ->
-                    Log.w("TaskRepository", "Error adding task", e)
-                }
+            try {
+                // Feladat mentése Firestore-ba, várakozással
+                Firebase.firestore.collection("users")
+                    .document(userId)
+                    .collection("todos")
+                    .add(newTask)
+                    .await()  // Várunk, amíg a művelet befejeződik
+
+                Log.d("TaskRepository", "Task successfully added!")
+                true  // Sikeres mentés esetén true érték
+            } catch (e: Exception) {
+                Log.w("TaskRepository", "Error adding task", e)
+                false  // Sikertelen mentés esetén false érték
+            }
         } else {
             Log.w("TaskRepository", "No authenticated user.")
+            false
         }
     }
-
 
     suspend fun updateTask(taskId: String, updatedTask: Task): Boolean {
         return firebaseService.updateTask(taskId, updatedTask)
@@ -77,4 +85,75 @@ class TaskRepository @Inject constructor(
     suspend fun deleteTask(taskId: String): Boolean {
         return firebaseService.deleteTask(taskId)
     }
+
+    fun getCompletedTasksFlow(): Flow<List<Task>> = callbackFlow {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+
+        if (currentUser != null) {
+            val userId = currentUser.uid
+            val listener = Firebase.firestore.collection("users")
+                .document(userId)
+                .collection("todos")
+                .whereEqualTo("completed", true)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        close(error)
+                        return@addSnapshotListener
+                    }
+
+                    val tasks = snapshot?.documents?.mapNotNull { it.toObject(Task::class.java) } ?: emptyList()
+                    trySend(tasks)
+                }
+
+            awaitClose { listener.remove() }
+        } else {
+            close(Exception("No authenticated user."))
+        }
+    }
+
+
+    suspend fun getCompletedTasks(): List<Task> {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
+        return try {
+            val snapshot = Firebase.firestore.collection("users")
+                .document(userId)
+                .collection("todos")
+                .whereEqualTo("completed", true)
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { it.toObject(Task::class.java) }
+        } catch (e: Exception) {
+            Log.e("TaskRepository", "Error fetching completed tasks", e)
+            emptyList()
+        }
+    }
+
+    suspend fun markTaskAsCompleted(taskId: String): Boolean {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return false
+        return try {
+            Firebase.firestore.collection("users")
+                .document(userId)
+                .collection("todos")
+                .document(taskId)
+                .update("completed", true)
+                .await()
+
+            Log.d("TaskRepository", "Task marked as completed!")
+            true
+        } catch (e: Exception) {
+            Log.e("TaskRepository", "Error marking task as completed", e)
+            false
+        }
+    }
+
+    suspend fun getTaskById(taskId: String): Task? {
+        return try {
+            val taskDocument = firebaseService.getTaskByIdFromFirestore(taskId) // Lekérdezés ID alapján
+            taskDocument?.toObject(Task::class.java) // Átalakítjuk a Firestore dokumentumot Task objektummá
+        } catch (e: Exception) {
+            null
+        }
+    }
+
 }
