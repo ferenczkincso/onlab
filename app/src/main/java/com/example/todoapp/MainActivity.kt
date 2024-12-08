@@ -21,26 +21,30 @@ import com.example.todoapp.presentation.ui.task.AddTaskScreen
 import com.example.todoapp.presentation.ui.task.DoneTaskListScreen
 import com.example.todoapp.presentation.ui.task.TaskListScreen
 import com.example.todoapp.presentation.viewmodel.TaskViewModel
-import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.FirebaseApp
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var firebaseService: FirebaseService
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FirebaseApp.initializeApp(this)
         setContent {
             val navController = rememberNavController()
             val viewModel: TaskViewModel = hiltViewModel()
-            val firebaseService = FirebaseService()
             var isUserLoggedIn by remember {
-                mutableStateOf(FirebaseAuth.getInstance().currentUser != null)
+                mutableStateOf(firebaseService.isUserLoggedIn())
             }
 
             LaunchedEffect(isUserLoggedIn) {
                 if (isUserLoggedIn) {
-                        viewModel.loadCompletedTasks()
-                    }
+                    viewModel.loadCompletedTasks()
+                }
             }
+
             val state by viewModel.state.collectAsState()
 
 
@@ -80,7 +84,7 @@ class MainActivity : ComponentActivity() {
                 composable("addTask") {
                     AddTaskScreen(
                         onSaveTask = {
-                            navController.popBackStack()  // Navigálás vissza a taskList-re mentés után
+                            navController.popBackStack()
                         }
                     )
                 }
@@ -93,6 +97,7 @@ class MainActivity : ComponentActivity() {
                                 popUpTo(0) { inclusive = true }
                             } },
                         onTaskList = {navController.navigate("taskList")  },
+                        onPopBackStack = { navController.popBackStack() },
                         onDoneTaskListClick = { navController.navigate("doneTaskList") }
                     )
                 }
@@ -107,6 +112,7 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onBackClick = { navController.popBackStack() },
+                        onTaskListClick = { navController.navigate("taskList") },
                     )
                 }
             }

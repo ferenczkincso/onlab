@@ -16,8 +16,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseAuth(): FirebaseAuth {
-        return FirebaseAuth.getInstance()
+    fun provideTaskRepository(
+        firebaseService: FirebaseService
+    ): TaskRepository {
+        return TaskRepository(firebaseService)
     }
 
     @Provides
@@ -28,15 +30,15 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseService(): FirebaseService {
-        return FirebaseService()
+    fun provideFirebaseService(
+        firebaseAuth: FirebaseAuth,
+        firebaseFirestore: FirebaseFirestore
+    ): FirebaseService {
+        return FirebaseService(firebaseFirestore, firebaseAuth)
     }
 
     @Provides
-    @Singleton
-    fun provideTaskRepository(
-        firebaseService: FirebaseService
-    ): TaskRepository {
-        return TaskRepository(firebaseService)
+    fun provideFirebaseAuth(): FirebaseAuth {
+        return FirebaseAuth.getInstance()
     }
 }

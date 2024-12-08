@@ -1,5 +1,6 @@
 package com.example.todoapp.presentation.ui.task
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -36,13 +37,13 @@ fun AddTaskScreen(
     var expanded by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
 
+
     val onSaveClick = {
-        if (title.isNotBlank() && !isSaving) {
+        if (title.isNotBlank() &&  !isSaving) {
             isSaving = true
             val userId = viewModel.getCurrentUserId()
             if (userId != null) {
                 val task = Task(
-                    id = "",
                     title = title,
                     description = description,
                     dueDate = null,
@@ -50,12 +51,17 @@ fun AddTaskScreen(
                     userId = userId,
                     completed = false
                 )
+                Log.d("TaskScreen", "Task created for addition: $task")
                 viewModel.sendIntent(TaskIntent.AddTask(task))
+                Log.d("TaskScreen", "Intent sent for addition")
+                isSaving = false
                 onSaveTask()
+            } else {
+                isSaving = false
             }
-            isSaving = false
         }
     }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -119,7 +125,7 @@ fun AddTaskScreen(
         ) {
             TextField(
                 value = priority.name,
-                onValueChange = {}, // Read-only field
+                onValueChange = {},
                 readOnly = true,
                 textStyle = customTypography.bodyMedium,
                 label = { Text("Priority", style = customTypography.bodyMedium) },
@@ -138,7 +144,7 @@ fun AddTaskScreen(
                     cursorColor = Color.DarkGray
                 ),
                 modifier = Modifier
-                    .menuAnchor() // Aligns the menu with the text field
+                    .menuAnchor()
                     .fillMaxWidth()
             )
 
@@ -178,7 +184,10 @@ fun AddTaskScreen(
         }
         Spacer(modifier = Modifier.height(36.dp))
         FilledTonalButton(
-            onClick = onSaveClick,
+            onClick ={
+                Log.d("TaskScreen", "Add Task button clicked with name: $title, description: $description")
+                onSaveClick()
+            },
             enabled = !isSaving,
             colors = ButtonDefaults.buttonColors(containerColor = lightColorScheme().secondary),
         ) {

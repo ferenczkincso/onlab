@@ -4,9 +4,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todoapp.data.firebase.FirebaseService
+import com.example.todoapp.domain.state.RegisterState
 import com.google.firebase.auth.AuthResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
@@ -14,23 +18,18 @@ class RegisterViewModel @Inject constructor(
     private val firebaseService: FirebaseService
 ) : ViewModel() {
 
-    fun register(email: String, password: String, onResult: (AuthResult?, Exception?) -> Unit) {
+    private val _registerState = MutableStateFlow<RegisterState>(RegisterState.Idle)
+    val registerState: StateFlow<RegisterState> = _registerState
+
+
+    fun register(email: String, password: String) {
         viewModelScope.launch {
-            val result = firebaseService.register(email, password)
-            if (result != null) {
-                onResult(result, null)
-            } else {
-                onResult(null, Exception("Registration failed"))
-            }
-        }
-    }
-    fun login(email: String, password: String, onResult: (Boolean, Exception?) -> Unit) {
-        viewModelScope.launch {
-            val isSuccess = firebaseService.login(email, password)
-            if (isSuccess) {
-                onResult(true, null)
-            } else {
-                onResult(false, Exception("Login failed"))
+            _registerState.value = RegisterState.Loading
+            try {
+                firebaseService.auth.createUserWithEmailAndPassword(email, password).await()
+                _registerState.value = RegisterState.Success
+            } catch (e: Exception) {
+                _registerState.value = RegisterState.Error(e.message ?: "Unknown error")
             }
         }
     }

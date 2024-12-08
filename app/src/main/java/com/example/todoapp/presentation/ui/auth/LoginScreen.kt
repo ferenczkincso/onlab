@@ -1,17 +1,32 @@
 package com.example.todoapp.presentation.ui.auth
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.todoapp.domain.state.LoginState
+import com.example.todoapp.presentation.ui.theme.customBlue
+import com.example.todoapp.presentation.ui.theme.customTypography
 import com.example.todoapp.presentation.viewmodel.LoginViewModel
+import kotlinx.coroutines.coroutineScope
+
 
 @Composable
 fun LoginScreen(
@@ -19,53 +34,123 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
     onLoginSuccess: () -> Unit
 ) {
-    val isLoading by viewModel.isLoading.collectAsState()
-    val isUserLoggedIn by viewModel.isUserLoggedIn.collectAsState()
+    val loginState by viewModel.loginState.collectAsState()
 
-    if (isUserLoggedIn) {
-        onLoginSuccess()
-    }
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(loginState) {
+        if (loginState is LoginState.LoggedIn) {
+            Log.d("LoginScreen", "Navigating to TaskListScreen")
+            navController.navigate("taskList") {
+                popUpTo("login") { inclusive = true }
+            }
+        }
+    }
+
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(25.dp)
     ) {
-        TextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
+        Text(
+            text = "Welcome to TaskTask",
+            style = customTypography.titleLarge,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            color = customBlue,
+            fontSize = 30.sp,
+            modifier = Modifier.align(Alignment.Start)
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        TextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation()
+        Spacer (modifier = Modifier.height(5.dp))
+        Text(
+            text = "Login",
+            style = customTypography.titleLarge,
+            fontSize = 25.sp,
+            modifier = Modifier.align(Alignment.Start)
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = {
-                viewModel.login(email, password)
-            },
-            enabled = !isLoading
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(if (isLoading) "Logging in..." else "Log in")
-        }
+            OutlinedTextField(
+                value = email,
+                textStyle = customTypography.bodyMedium,
+                colors = TextFieldDefaults.colors(
+                    unfocusedContainerColor = Color(0xFFD6D8DE),
+                    focusedContainerColor = Color(0xFFD6D8DE),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    focusedLabelColor = Color.DarkGray,
+                    unfocusedLabelColor = Color.Gray,
+                    disabledLabelColor = Color.LightGray,
+                    cursorColor = Color.DarkGray
+                ),
+                onValueChange = { email = it },
+                label = { Text("Email", style = customTypography.bodyMedium) }
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            onClick = { navController.navigate("register") }
-        ) {
-            Text("Create Account")
+            OutlinedTextField(
+                value = password,
+                textStyle = customTypography.bodyMedium,
+                colors = TextFieldDefaults.colors(
+                    unfocusedContainerColor = Color(0xFFD6D8DE),
+                    focusedContainerColor = Color(0xFFD6D8DE),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    focusedLabelColor = Color.DarkGray,
+                    unfocusedLabelColor = Color.Gray,
+                    disabledLabelColor = Color.LightGray,
+                    cursorColor = Color.DarkGray
+                ),
+                onValueChange = { password = it },
+                label = { Text("Password", style = customTypography.bodyMedium) },
+                visualTransformation = PasswordVisualTransformation()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            errorMessage?.let {
+                Text(text = it, color = MaterialTheme.colorScheme.error)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            Button(
+                onClick = {
+                        viewModel.login(
+                            email = email,
+                            password = password
+                        )
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = lightColorScheme().secondary),
+                enabled = loginState !is LoginState.Loading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Log in", style = customTypography.bodyMedium)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    navController.navigate("register") {
+                        popUpTo("register") { inclusive = true }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = lightColorScheme().secondary),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Create Account", style = customTypography.bodyMedium)
+            }
         }
     }
 }

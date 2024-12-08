@@ -4,11 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +30,7 @@ fun PomodoroTimerScreen(
     onPomodoro: () -> Unit,
     onLogout: () -> Unit,
     onTaskList: () -> Unit,
+    onPopBackStack: () -> Unit,
     onDoneTaskListClick: () -> Unit
 ) {
     var timeLeft by remember { mutableStateOf(30 * 60L) }
@@ -104,7 +107,10 @@ fun PomodoroTimerScreen(
 
                 Button(onClick = {
                     isRunning = !isRunning
-                }) {
+                },
+                    colors = ButtonDefaults.buttonColors(containerColor = lightColorScheme().secondary)
+                )
+                {
                     Text(if (isRunning) "Pause" else "Start")
                 }
 
@@ -113,7 +119,9 @@ fun PomodoroTimerScreen(
                 Button(onClick = {
                     timeLeft = 30 * 60L
                     isRunning = false
-                }) {
+                },
+                    colors = ButtonDefaults.buttonColors(containerColor = lightColorScheme().secondary)
+                ) {
                     Text("Reset")
                 }
             }

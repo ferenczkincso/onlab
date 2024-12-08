@@ -1,6 +1,10 @@
 package com.example.todoapp
 
 import android.app.Application
+import com.google.firebase.Firebase
+import com.google.firebase.app
+import com.google.firebase.firestore.firestore
+import com.google.firebase.initialize
 import dagger.hilt.android.HiltAndroidApp
 
 //Erre a fájlra azért van szükség külön, hogy a Hiltet tudjuk használni.
@@ -10,5 +14,6 @@ import dagger.hilt.android.HiltAndroidApp
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
+        Firebase.initialize(this)
     }
 }

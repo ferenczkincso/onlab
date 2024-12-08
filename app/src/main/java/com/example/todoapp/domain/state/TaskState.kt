@@ -7,5 +7,6 @@ sealed class TaskState {
     data class TasksLoaded(val activeTasks: List<Task>, val completedTasks: List<Task>) : TaskState()
     data class Error(val message: String) : TaskState()
     object UserLoggedOut : TaskState()
+    object TaskAdded : TaskState()
 }
 

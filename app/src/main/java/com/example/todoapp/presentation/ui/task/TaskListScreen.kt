@@ -5,48 +5,45 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.collectAsState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.*
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import com.example.todoapp.presentation.viewmodel.TaskViewModel
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.example.todoapp.data.firebase.FirebaseService
-import com.example.todoapp.presentation.ui.theme.customTypography
-import kotlinx.coroutines.launch
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.todoapp.domain.intent.TaskIntent
 import com.example.todoapp.domain.state.TaskState
+import com.example.todoapp.presentation.ui.theme.customTypography
+import com.example.todoapp.presentation.viewmodel.TaskViewModel
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -124,18 +121,19 @@ fun TaskListScreen(
                                 }
                                 is TaskState.TasksLoaded -> {
                                     val tasksLoaded = state as TaskState.TasksLoaded
-                                    items(tasksLoaded.activeTasks + tasksLoaded.completedTasks) { task ->
+                                    Log.d("TaskListScreen", "Loaded tasks: ${tasksLoaded.activeTasks}")
+                                    items(tasksLoaded.activeTasks) { task ->
                                         TaskItem(
                                             task = task,
-                                            onTaskClick = {
-                                                viewModel.sendIntent(TaskIntent.UpdateTaskStatus(task.id, !task.completed))
+                                            onTaskCompleteToggle = { updatedTask ->
+                                                Log.d("TaskListScreen", "Marking task as completed")
+                                                viewModel.handleIntent(TaskIntent.UpdateTaskStatus(updatedTask.id, updatedTask.completed))
                                             },
-                                            onTaskCompleteToggle = { completed ->
-                                                viewModel.sendIntent(TaskIntent.UpdateTaskStatus(task.id, completed))
-                                            }
+                                            onDeleteClick = { viewModel.deleteTask(task.id)}
                                         )
                                     }
                                 }
+
                                 is TaskState.Error -> {
                                     val errorMessage = (state as TaskState.Error).message
                                     Log.d("TaskListScreen", "Error loading tasks: $errorMessage")
