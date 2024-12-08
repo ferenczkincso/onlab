@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.todoapp.domain.intent.LoginIntent
 import com.example.todoapp.domain.state.LoginState
 import com.example.todoapp.presentation.ui.theme.customBlue
 import com.example.todoapp.presentation.ui.theme.customTypography
@@ -36,10 +37,8 @@ fun LoginScreen(
 ) {
     val loginState by viewModel.loginState.collectAsState()
 
-
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(loginState) {
         if (loginState is LoginState.LoggedIn) {
@@ -49,7 +48,6 @@ fun LoginScreen(
             }
         }
     }
-
 
     Column(
         modifier = Modifier
@@ -64,13 +62,16 @@ fun LoginScreen(
             fontSize = 30.sp,
             modifier = Modifier.align(Alignment.Start)
         )
-        Spacer (modifier = Modifier.height(5.dp))
+
+        Spacer(modifier = Modifier.height(5.dp))
+
         Text(
             text = "Login",
             style = customTypography.titleLarge,
             fontSize = 25.sp,
             modifier = Modifier.align(Alignment.Start)
         )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -119,23 +120,29 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            errorMessage?.let {
-                Text(text = it, color = MaterialTheme.colorScheme.error)
+
+            if (loginState is LoginState.LoggingError) {
+                val errorMessage = (loginState as LoginState.LoggingError).message
+                Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
             Button(
                 onClick = {
-                        viewModel.login(
-                            email = email,
-                            password = password
-                        )
+                    viewModel.handleIntent(LoginIntent.Login(email, password))
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = lightColorScheme().secondary),
+                colors = ButtonDefaults.buttonColors(containerColor = customBlue),
                 enabled = loginState !is LoginState.Loading,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Log in", style = customTypography.bodyMedium)
+                if (loginState is LoginState.Loading) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else {
+                    Text("Log in", style = customTypography.bodyMedium)
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -146,7 +153,7 @@ fun LoginScreen(
                         popUpTo("register") { inclusive = true }
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = lightColorScheme().secondary),
+                colors = ButtonDefaults.buttonColors(containerColor = customBlue),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Create Account", style = customTypography.bodyMedium)

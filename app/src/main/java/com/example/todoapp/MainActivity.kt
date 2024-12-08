@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(isUserLoggedIn) {
                 if (isUserLoggedIn) {
-                    viewModel.loadCompletedTasks()
+                    viewModel.handleIntent(com.example.todoapp.domain.intent.TaskIntent.LoadTodos)
                 }
             }
 

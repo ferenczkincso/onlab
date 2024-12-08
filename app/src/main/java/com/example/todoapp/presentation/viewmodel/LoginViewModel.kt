@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todoapp.data.firebase.FirebaseService
+import com.example.todoapp.domain.intent.LoginIntent
 import com.example.todoapp.domain.state.LoginState
 import com.google.firebase.auth.AuthResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,8 +22,14 @@ class LoginViewModel @Inject constructor(
     private val _loginState = MutableStateFlow<LoginState>(LoginState.LoggedOut)
     val loginState: StateFlow<LoginState> = _loginState
 
+    fun handleIntent(intent: LoginIntent) {
+        when (intent) {
+            is LoginIntent.Login -> login(intent.email, intent.password)
+            is LoginIntent.Logout -> logout()
+        }
+    }
 
-    fun login(email: String, password: String) {
+    private fun login(email: String, password: String) {
         viewModelScope.launch {
             _loginState.value = LoginState.Loading
             try {
@@ -34,4 +41,9 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    private fun logout() {
+        firebaseService.auth.signOut()
+        _loginState.value = LoginState.LoggedOut
+    }
 }
+

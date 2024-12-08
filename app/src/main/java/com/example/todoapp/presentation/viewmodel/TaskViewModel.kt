@@ -58,9 +58,6 @@ class TaskViewModel @Inject constructor(
                      addTask(intent.task)
                 }
                 is TaskIntent.UpdateTaskStatus -> updateTaskStatus(intent.taskId, intent.completed)
-                is TaskIntent.ShowCompletedTasks -> filterCompletedTasks()
-                is TaskIntent.LoadCompletedTodos -> loadCompletedTasks()
-                is TaskIntent.MarkTaskAsCompleted -> markTaskAsCompleted(intent.taskId)
             }
         }
     }
@@ -108,18 +105,6 @@ class TaskViewModel @Inject constructor(
     }
 
 
-    private fun markTaskAsCompleted(taskId: String) {
-        viewModelScope.launch {
-            _state.value = TaskState.Loading
-            val success = taskRepository.updateTask(taskId, true)
-            if (success) {
-                loadTasks()
-            } else {
-                _state.value = TaskState.Error("Failed to mark task as completed.")
-            }
-        }
-    }
-
     private fun loadTasks() {
         viewModelScope.launch {
             val tasks = taskRepository.getUserTasks()
@@ -128,33 +113,6 @@ class TaskViewModel @Inject constructor(
             Log.d("TaskViewModel", "Active tasks: $activeTasks")
             Log.d("TaskViewModel", "Completed tasks: $completedTasks")
             _state.value = TaskState.TasksLoaded(activeTasks, completedTasks)
-        }
-    }
-
-    fun loadCompletedTasks() {
-        viewModelScope.launch {
-            _state.value = TaskState.Loading
-            try {
-                val tasks = taskRepository.getUserTasks().filter { it.completed } ?: emptyList()
-                _state.value = TaskState.TasksLoaded(
-                    activeTasks = emptyList(),
-                    completedTasks = tasks
-                )
-            } catch (e: Exception) {
-                _state.value = TaskState.Error("Failed to load completed tasks: ${e.message}")
-            }
-        }
-    }
-
-    private fun filterCompletedTasks() {
-        viewModelScope.launch {
-            val currentState = _state.value
-            if (currentState is TaskState.TasksLoaded) {
-                _state.value = TaskState.TasksLoaded(
-                    activeTasks = emptyList(),
-                    completedTasks = currentState.completedTasks
-                )
-            }
         }
     }
 

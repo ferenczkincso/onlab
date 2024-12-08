@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todoapp.data.firebase.FirebaseService
+import com.example.todoapp.domain.intent.RegisterIntent
 import com.example.todoapp.domain.state.RegisterState
 import com.google.firebase.auth.AuthResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,8 +22,13 @@ class RegisterViewModel @Inject constructor(
     private val _registerState = MutableStateFlow<RegisterState>(RegisterState.Idle)
     val registerState: StateFlow<RegisterState> = _registerState
 
+    fun handleIntent(intent: RegisterIntent) {
+        when (intent) {
+            is RegisterIntent.Register -> register(intent.email, intent.password)
+        }
+    }
 
-    fun register(email: String, password: String) {
+    private fun register(email: String, password: String) {
         viewModelScope.launch {
             _registerState.value = RegisterState.Loading
             try {

@@ -17,8 +17,6 @@ class FirebaseService @Inject constructor(
     val auth: FirebaseAuth
 
 ) {
-
-
     fun getUserId(): String? {
         return auth.currentUser?.uid
     }
