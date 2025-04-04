@@ -65,7 +65,7 @@ class TaskViewModel @Inject constructor(
         handleIntent(intent)
     }
 
-    private fun addTask(task: Task) {
+    fun addTask(task: Task) {
         viewModelScope.launch {
             try {
                 val addedTask = taskRepository.addTask(task)

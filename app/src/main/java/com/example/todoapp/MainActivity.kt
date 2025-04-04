@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.todoapp.data.firebase.FirebaseService
 import com.example.todoapp.presentation.ui.auth.LoginScreen
 import com.example.todoapp.presentation.ui.auth.RegisterScreen
+import com.example.todoapp.presentation.ui.calendar.CalendarScreen
 import com.example.todoapp.presentation.ui.pomodoro.PomodoroTimerScreen
 import com.example.todoapp.presentation.ui.task.AddTaskScreen
 import com.example.todoapp.presentation.ui.task.DoneTaskListScreen
@@ -77,7 +78,8 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onAddTaskClick = { navController.navigate("addTask") },
-                        onDoneTaskListClick = {navController.navigate("doneTaskList")}
+                        onDoneTaskListClick = {navController.navigate("doneTaskList")},
+                        onCalendarClick = {navController.navigate("calendar")}
                     )
                 }
 
@@ -85,7 +87,8 @@ class MainActivity : ComponentActivity() {
                     AddTaskScreen(
                         onSaveTask = {
                             navController.popBackStack()
-                        }
+                        },
+                        firebaseService = firebaseService
                     )
                 }
 
@@ -98,7 +101,8 @@ class MainActivity : ComponentActivity() {
                             } },
                         onTaskList = {navController.navigate("taskList")  },
                         onPopBackStack = { navController.popBackStack() },
-                        onDoneTaskListClick = { navController.navigate("doneTaskList") }
+                        onDoneTaskListClick = { navController.navigate("doneTaskList") },
+                        onCalendarClick = {navController.navigate("calendar")}
                     )
                 }
                 composable("doneTaskList") {
@@ -113,6 +117,17 @@ class MainActivity : ComponentActivity() {
                         },
                         onBackClick = { navController.popBackStack() },
                         onTaskListClick = { navController.navigate("taskList") },
+                        onCalendarClick = {navController.navigate("calendar")}
+                    )
+                }
+                composable(
+                    route = "calendar",
+                ) {
+                    CalendarScreen(
+                        onNavigateToAddTask = {
+                            navController.navigate("addTask")
+                        },
+                        firebaseService = firebaseService
                     )
                 }
             }

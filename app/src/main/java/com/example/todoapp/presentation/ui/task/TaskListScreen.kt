@@ -53,14 +53,16 @@ fun TaskListScreen(
     onPomodoroClick: () -> Unit,
     onLogout: () -> Unit,
     onAddTaskClick: () -> Unit,
-    onDoneTaskListClick: () -> Unit
+    onDoneTaskListClick: () -> Unit,
+    onCalendarClick: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
     MaterialTheme(
         typography = customTypography,
     ) {
-        Surface(modifier = Modifier.fillMaxSize()) {
+        Surface(modifier = Modifier.fillMaxSize(),
+            color = Color(0xFFFFFFFF)) {
             var showDialog by remember { mutableStateOf(false) }
             val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
             val scope = rememberCoroutineScope()
@@ -100,7 +102,8 @@ fun TaskListScreen(
                         onPomodoroClick = onPomodoroClick,
                         onLogoutClick = { showDialog = true },
                         onTaskListClick = { scope.launch { drawerState.close() } },
-                        onDoneTaskListClick = onDoneTaskListClick
+                        onDoneTaskListClick = onDoneTaskListClick,
+                        onCalendarClick = onCalendarClick
                     )
                 },
                 scrimColor = MaterialTheme.colorScheme.surface.copy(alpha = 1f)
@@ -165,7 +168,8 @@ fun DrawerContent(
     onPomodoroClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onTaskListClick: () -> Unit,
-    onDoneTaskListClick: () -> Unit
+    onDoneTaskListClick: () -> Unit,
+    onCalendarClick: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -188,6 +192,12 @@ fun DrawerContent(
             DrawerTaskItem(
                 title = "Done tasks list",
                 onClick = onDoneTaskListClick
+            )
+        }
+        item{
+            DrawerTaskItem(
+                title = "Calendar",
+                onClick = onCalendarClick
             )
         }
         item {

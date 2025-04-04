@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.todoapp.data.model.Task
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
@@ -15,7 +16,6 @@ import javax.inject.Inject
 class FirebaseService @Inject constructor(
     private val db: FirebaseFirestore,
     val auth: FirebaseAuth
-
 ) {
     fun getUserId(): String? {
         return auth.currentUser?.uid
@@ -56,16 +56,19 @@ class FirebaseService @Inject constructor(
             }
 
             val tasks = snapshot?.documents?.mapNotNull { doc ->
-                val task = doc.toObject(Task::class.java) ?: return@mapNotNull null
-                task.copy(id = doc.id)
+                try {
+                    val task = doc.toObject(Task::class.java) ?: return@mapNotNull null
+                    task.copy(id = doc.id)
+                } catch (e: Exception) {
+                    Log.e("FirebaseService", "Error converting document to Task", e)
+                    null
+                }
             } ?: emptyList()
 
             trySend(tasks).isSuccess
         }
         awaitClose { listener.remove() }
     }
-
-
 
     fun addTask(task: Task, callback: (Task?) -> Unit) {
         val tasksCollection = userTasksCollection()
@@ -77,12 +80,12 @@ class FirebaseService @Inject constructor(
 
         tasksCollection.add(task)
             .addOnSuccessListener { documentReference ->
-                val taskWithId = task.copy(id = documentReference.id) // ID hozzárendelése
+                val taskWithId = task.copy(id = documentReference.id)
                 Log.d("FirebaseService", "Document added successfully with ID: ${documentReference.id}")
                 callback(taskWithId)
             }
             .addOnFailureListener { e ->
-                Log.e("FirebaseService", "Error adding document to Firestore", e) // Hiba logolása
+                Log.e("FirebaseService", "Error adding document to Firestore", e)
                 callback(null)
             }
     }
@@ -94,15 +97,22 @@ class FirebaseService @Inject constructor(
                 Log.e("FirebaseService", "Snapshot listener error", exception)
                 return@addSnapshotListener
             }
+            
             val tasks = snapshot?.documents?.mapNotNull { doc ->
-                val task = doc.toObject(Task::class.java)
-                task?.copy(id = doc.id)
+                try {
+                    val task = doc.toObject(Task::class.java) ?: return@mapNotNull null
+                    task.copy(id = doc.id)
+                } catch (e: Exception) {
+                    Log.e("FirebaseService", "Error converting document to Task", e)
+                    null
+                }
             } ?: emptyList()
 
             Log.d("FirebaseService", "Tasks updated: $tasks")
             onTasksChanged(tasks)
         }
     }
+    
     suspend fun deleteTask(taskId: String): Boolean {
         val tasksCollection = userTasksCollection() ?: return false
         return try {
@@ -113,6 +123,7 @@ class FirebaseService @Inject constructor(
             false
         }
     }
+    
     suspend fun updateTask(taskDocumentId: String, completed: Boolean): Boolean {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return false
         return try {

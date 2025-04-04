@@ -11,7 +11,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
@@ -43,6 +42,7 @@ fun DoneTaskListScreen(
     onLogout: () -> Unit,
     onPomodoroClick: () -> Unit,
     onTaskListClick: () -> Unit,
+    onCalendarClick: () -> Unit,
     viewModel: TaskViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -50,7 +50,8 @@ fun DoneTaskListScreen(
     MaterialTheme(
         typography = customTypography,
     ) {
-        Surface(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
+        Surface(modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+            color = Color(0xFFFFFFFF)) {
             var showDialog by remember { mutableStateOf(false) }
             val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
             val scope = rememberCoroutineScope()
@@ -90,7 +91,8 @@ fun DoneTaskListScreen(
                         onPomodoroClick = onPomodoroClick,
                         onLogoutClick = { showDialog = true },
                         onTaskListClick = onTaskListClick,
-                        onDoneTaskListClick = { scope.launch { drawerState.close() } }
+                        onDoneTaskListClick = { scope.launch { drawerState.close() } },
+                        onCalendarClick = onCalendarClick
                     )
                 },
                 scrimColor = MaterialTheme.colorScheme.surface.copy(alpha = 1f)

@@ -31,6 +31,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.todoapp.data.model.Priority
 import com.example.todoapp.data.model.Task
+import java.text.SimpleDateFormat
+import java.util.Locale
+
 
 @Composable
 fun TaskItem(
@@ -38,6 +41,9 @@ fun TaskItem(
     onTaskCompleteToggle: (Task) -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val formattedDate = task.dueDate?.toDate()?.let { dateFormat.format(it) } ?: "No due date"
+
     Card(
         colors = CardColors(
             containerColor = when (task.priority) {
@@ -96,6 +102,12 @@ fun TaskItem(
                     Spacer(modifier = Modifier.height(5.dp))
                     Text(
                         text = "Priority: ${task.priority}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Text(
+                        text = "Due Date: $formattedDate",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White
                     )
