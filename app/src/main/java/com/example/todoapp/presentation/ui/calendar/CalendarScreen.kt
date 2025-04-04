@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,17 +17,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.todoapp.data.firebase.FirebaseService
 import com.example.todoapp.data.model.Task
+import com.example.todoapp.presentation.viewmodel.CalendarViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.TextStyle
 import java.util.*
-import javax.inject.Inject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +41,6 @@ fun CalendarScreen(
     val error by viewModel.error.collectAsState()
     val currentDate = remember { LocalDate.now() }
     
-    // Create a set of dates with tasks for the calendar
     val datesWithTasks = remember(tasks) {
         tasks.mapNotNull { task -> 
             try {
@@ -57,7 +54,7 @@ fun CalendarScreen(
     
     // Calendar state
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
-    val firstDayOfWeek = remember { DayOfWeek.SUNDAY }
+    val firstDayOfWeek = remember { DayOfWeek.MONDAY }
     
     // Calculate days in month
     val daysInMonth = remember(currentMonth) {
@@ -168,7 +165,7 @@ fun CalendarScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        val daysOfWeek = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+                        val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
                         daysOfWeek.forEach { day ->
                             Text(
                                 text = day,
@@ -206,7 +203,6 @@ fun CalendarScreen(
                 }
             }
             
-            // Selected date tasks
             selectedDate?.let { date ->
                 val tasksForSelectedDate = tasks.filter { task ->
                     try {
