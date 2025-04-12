@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +21,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.todoapp.data.firebase.FirebaseService
+import com.example.todoapp.data.model.Priority
 import com.example.todoapp.data.model.Task
+import com.example.todoapp.presentation.ui.theme.customBlue
+import com.example.todoapp.presentation.ui.theme.customBlueLight
+import com.example.todoapp.presentation.ui.theme.customTypography
 import com.example.todoapp.presentation.viewmodel.CalendarViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -28,13 +34,14 @@ import java.time.ZoneId
 import java.time.format.TextStyle
 import java.util.*
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
     modifier: Modifier = Modifier,
     viewModel: CalendarViewModel = hiltViewModel(),
     firebaseService: FirebaseService,
-    onNavigateToAddTask: () -> Unit = {}
+    onAddTaskClick: () -> Unit,
 ) {
     val tasks by viewModel.tasks.collectAsState(initial = emptyList())
     val selectedDate by viewModel.selectedDate.collectAsState()
@@ -81,10 +88,14 @@ fun CalendarScreen(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onNavigateToAddTask,
-                containerColor = MaterialTheme.colorScheme.primary
+                onClick = onAddTaskClick,
+                shape = CircleShape,
+                contentColor = Color.White,
+                containerColor = Color(0xFF65647C),
+                modifier = Modifier
+                    .padding(16.dp)
             ) {
-                Text("+", style = MaterialTheme.typography.headlineMedium)
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Task")
             }
         }
     ) { padding ->
@@ -124,22 +135,22 @@ fun CalendarScreen(
                 }
             }
 
-            // Calendar header with navigation
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
-                    Text("←", style = MaterialTheme.typography.titleLarge)
+                    Text("←", style = customTypography.titleLarge, color= customBlue)
                 }
                 Text(
                     text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
-                    style = MaterialTheme.typography.titleLarge,
+                    style = customTypography.titleLarge,
+                    color= customBlue,
                     fontWeight = FontWeight.Bold
                 )
                 IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) {
-                    Text("→", style = MaterialTheme.typography.titleLarge)
+                    Text("→", style = customTypography.titleLarge, color= customBlue)
                 }
             }
             
@@ -149,7 +160,7 @@ fun CalendarScreen(
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = Color(0xFFFFFFFF)
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 2.dp
@@ -171,9 +182,9 @@ fun CalendarScreen(
                                 text = day,
                                 modifier = Modifier.weight(1f),
                                 textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = customTypography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = customBlue
                             )
                         }
                     }
@@ -215,8 +226,9 @@ fun CalendarScreen(
                 if (tasksForSelectedDate.isNotEmpty()) {
                     Text(
                         text = "Tasks for ${date.format(java.time.format.DateTimeFormatter.ofPattern("MMMM d, yyyy"))}",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = customTypography.titleMedium,
                         fontWeight = FontWeight.Bold,
+                        color = customBlue,
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                     
@@ -250,14 +262,14 @@ private fun Day(
             .clip(CircleShape)
             .background(
                 when {
-                    isSelected -> MaterialTheme.colorScheme.primary
-                    isToday -> MaterialTheme.colorScheme.primaryContainer
+                    isSelected -> customBlue
+                    isToday -> customBlueLight
                     else -> Color.Transparent
                 }
             )
             .border(
                 width = if (hasTask) 2.dp else 0.dp,
-                color = MaterialTheme.colorScheme.primary,
+                color = customBlue,
                 shape = CircleShape
             )
             .clickable(onClick = onDateSelected),
@@ -265,7 +277,7 @@ private fun Day(
     ) {
         Text(
             text = date.dayOfMonth.toString(),
-            style = MaterialTheme.typography.bodyMedium,
+            style = customTypography.bodyMedium,
             color = when {
                 isSelected -> MaterialTheme.colorScheme.onPrimary
                 !isCurrentMonth -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
@@ -282,8 +294,12 @@ private fun TaskCard(task: Task) {
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
+            containerColor = when (task.priority) {
+                Priority.HIGH -> Color(0xFF8B7E74)
+                Priority.MEDIUM -> Color(0xFFC7BCA1)
+                Priority.LOW -> Color(0xFFF1D3B3)
+                else -> Color(0xFFe6e1d5)
+            }        ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
         )
@@ -295,7 +311,7 @@ private fun TaskCard(task: Task) {
         ) {
             Text(
                 text = task.title,
-                style = MaterialTheme.typography.titleMedium,
+                style = customTypography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             
@@ -303,7 +319,7 @@ private fun TaskCard(task: Task) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = task.description,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = customTypography.bodyMedium
                 )
             }
             
@@ -316,7 +332,7 @@ private fun TaskCard(task: Task) {
             ) {
                 Text(
                     text = task.priority.name,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = customTypography.bodySmall,
                     color = when (task.priority) {
                         com.example.todoapp.data.model.Priority.HIGH -> MaterialTheme.colorScheme.error
                         com.example.todoapp.data.model.Priority.MEDIUM -> MaterialTheme.colorScheme.tertiary
@@ -328,7 +344,7 @@ private fun TaskCard(task: Task) {
                 if (task.completed) {
                     Text(
                         text = "Completed",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = customTypography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }

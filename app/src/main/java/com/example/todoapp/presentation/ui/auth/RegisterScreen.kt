@@ -110,7 +110,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password", style = customTypography.bodyMedium) },
+                    label = { Text("Password", style = customTypography.bodyMedium) },
                 visualTransformation = PasswordVisualTransformation(),
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color(0xFFD6D8DE),

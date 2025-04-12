@@ -3,6 +3,7 @@ package com.example.todoapp.presentation.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val customBlue = Color(0xFF65647C)
+val customBlueLight = Color(0xFFA09EC4)
 
 val primaryLight = Color(0xFF715A41)
 val onPrimaryLight = Color(0xFFFFFFFF)

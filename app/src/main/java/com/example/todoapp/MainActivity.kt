@@ -124,9 +124,7 @@ class MainActivity : ComponentActivity() {
                     route = "calendar",
                 ) {
                     CalendarScreen(
-                        onNavigateToAddTask = {
-                            navController.navigate("addTask")
-                        },
+                        onAddTaskClick = { navController.navigate("addTask") },
                         firebaseService = firebaseService
                     )
                 }
