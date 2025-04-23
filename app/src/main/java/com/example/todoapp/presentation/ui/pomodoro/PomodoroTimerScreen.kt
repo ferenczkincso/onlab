@@ -17,7 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.todoapp.presentation.ui.task.DrawerContent
+import com.example.todoapp.presentation.ui.MenuDrawer
 import com.example.todoapp.presentation.ui.task.TaskListHeader
 import com.example.todoapp.presentation.ui.theme.customTypography
 import kotlinx.coroutines.delay
@@ -77,7 +77,7 @@ fun PomodoroTimerScreen(
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
-                DrawerContent(
+                MenuDrawer(
                     onPomodoroClick = onPomodoro,
                     onLogoutClick = { showDialog = true },
                     onTaskListClick = onTaskList,

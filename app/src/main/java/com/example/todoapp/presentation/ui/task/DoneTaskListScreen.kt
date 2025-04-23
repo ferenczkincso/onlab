@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.todoapp.domain.state.TaskState
+import com.example.todoapp.presentation.ui.MenuDrawer
 import com.example.todoapp.presentation.ui.theme.customTypography
 import com.example.todoapp.presentation.viewmodel.TaskViewModel
 import kotlinx.coroutines.launch
@@ -87,7 +88,7 @@ fun DoneTaskListScreen(
             ModalNavigationDrawer(
                 drawerState = drawerState,
                 drawerContent = {
-                    DrawerContent(
+                    MenuDrawer(
                         onPomodoroClick = onPomodoroClick,
                         onLogoutClick = { showDialog = true },
                         onTaskListClick = onTaskListClick,
@@ -117,7 +118,8 @@ fun DoneTaskListScreen(
                                         TaskItem(
                                             task = task,
                                             onTaskCompleteToggle = {},
-                                            onDeleteClick = { viewModel.deleteTask(task.id) }
+                                            onDeleteClick = { viewModel.deleteTask(task.id) },
+                                            onEditClick = {}
                                         )
                                     }
                                 }

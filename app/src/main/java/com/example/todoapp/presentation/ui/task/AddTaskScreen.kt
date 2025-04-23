@@ -36,8 +36,10 @@ import com.example.todoapp.domain.intent.TaskIntent
 import com.example.todoapp.presentation.ui.theme.customTypography
 import com.example.todoapp.presentation.viewmodel.TaskViewModel
 import com.google.firebase.Timestamp
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
@@ -51,17 +53,33 @@ fun convertMillisToTimestamp(millis: Long?): Timestamp? {
 fun AddTaskScreen(
     onSaveTask: () -> Unit,
     viewModel: TaskViewModel = hiltViewModel(),
-    firebaseService: FirebaseService
+    firebaseService: FirebaseService,
+    existingTask: Task? = null
 ) {
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var priority by remember { mutableStateOf(Priority.NONE) }
+    val isEditMode = existingTask != null
+    var title by remember { mutableStateOf(existingTask?.title ?: "") }
+    var description by remember { mutableStateOf(existingTask?.description ?: "") }
+    var priority by remember { mutableStateOf(existingTask?.priority ?: Priority.NONE) }
     var expanded by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
-    var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
-    var selectedDate by remember { mutableStateOf("") }
+    var selectedDateMillis by remember { mutableStateOf<Long?>(existingTask?.dueDate?.toDate()?.time) }
+    var selectedDate by remember { mutableStateOf(existingTask?.dueDate?.toDate()?.let { 
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it) 
+    } ?: "") }
     val context = LocalContext.current
     
+    LaunchedEffect(existingTask) {
+        if (existingTask != null) {
+            title = existingTask.title
+            description = existingTask.description
+            priority = existingTask.priority
+            selectedDateMillis = existingTask.dueDate?.toDate()?.time
+            selectedDate = existingTask.dueDate?.toDate()?.let { 
+                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it) 
+            } ?: ""
+        }
+    }
+
     if (!firebaseService.isUserLoggedIn()) {
         Column(
             modifier = Modifier
@@ -101,16 +119,21 @@ fun AddTaskScreen(
         if (title.isNotBlank() && !isSaving) {
             isSaving = true
             val task = Task(
+                id = existingTask?.id ?: "",
                 title = title,
                 description = description,
                 dueDate = convertMillisToTimestamp(selectedDateMillis),
                 priority = priority,
                 userId = firebaseService.getUserId() ?: "",
-                completed = false
+                completed = existingTask?.completed ?: false
             )
-            
-            viewModel.addTask(task)
-            Log.d("TaskScreen", "Intent sent for addition")
+            if (isEditMode) {
+                viewModel.updateTask(task)
+                Log.d("TaskScreen", "Intent sent for update")
+            } else {
+                viewModel.addTask(task)
+                Log.d("TaskScreen", "Intent sent for addition")
+            }
             isSaving = false
             onSaveTask()
         }
@@ -122,7 +145,7 @@ fun AddTaskScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Add new task",
+        Text(text = if (isEditMode) "Edit task" else "Add new task",
             style = customTypography.titleLarge,
             fontSize = 30.sp,
             color = Color( 0xFF65647C)
@@ -198,6 +221,7 @@ fun AddTaskScreen(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .menuAnchor()
             )
 
             ExposedDropdownMenu(
@@ -273,7 +297,7 @@ fun AddTaskScreen(
             enabled = !isSaving,
             colors = ButtonDefaults.buttonColors(containerColor = lightColorScheme().secondary),
         ) {
-            Text("Add", style = customTypography.bodyLarge)
+            Text(if (isEditMode) "Update" else "Add", style = customTypography.bodyLarge)
         }
     }
 }

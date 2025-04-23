@@ -22,5 +22,6 @@ data class Task(
     val userId: String = "",
 
     @PropertyName("completed")
-    val completed: Boolean = false
+    val completed: Boolean = false,
+
 )

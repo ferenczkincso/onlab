@@ -39,8 +39,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.todoapp.data.model.Task
 import com.example.todoapp.domain.intent.TaskIntent
 import com.example.todoapp.domain.state.TaskState
+import com.example.todoapp.presentation.ui.DrawerTaskItem
+import com.example.todoapp.presentation.ui.MenuDrawer
 import com.example.todoapp.presentation.ui.theme.customTypography
 import com.example.todoapp.presentation.viewmodel.TaskViewModel
 import kotlinx.coroutines.launch
@@ -54,7 +57,8 @@ fun TaskListScreen(
     onLogout: () -> Unit,
     onAddTaskClick: () -> Unit,
     onDoneTaskListClick: () -> Unit,
-    onCalendarClick: () -> Unit
+    onCalendarClick: () -> Unit,
+    onTaskEditClick: (Task) ->Unit
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -97,16 +101,16 @@ fun TaskListScreen(
 
             ModalNavigationDrawer(
                 drawerState = drawerState,
-                drawerContent = {
-                    DrawerContent(
+                scrimColor = MaterialTheme.colorScheme.surface.copy(alpha = 1f),
+                        drawerContent = {
+                    MenuDrawer (
                         onPomodoroClick = onPomodoroClick,
                         onLogoutClick = { showDialog = true },
                         onTaskListClick = { scope.launch { drawerState.close() } },
                         onDoneTaskListClick = onDoneTaskListClick,
                         onCalendarClick = onCalendarClick
                     )
-                },
-                scrimColor = MaterialTheme.colorScheme.surface.copy(alpha = 1f)
+                }
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     TaskListHeader(onDrawerOpen = { scope.launch { drawerState.open() } })
@@ -132,7 +136,8 @@ fun TaskListScreen(
                                                 Log.d("TaskListScreen", "Marking task as completed")
                                                 viewModel.handleIntent(TaskIntent.UpdateTaskStatus(updatedTask.id, updatedTask.completed))
                                             },
-                                            onDeleteClick = { viewModel.deleteTask(task.id)}
+                                            onDeleteClick = { viewModel.deleteTask(task.id)},
+                                            onEditClick = {onTaskEditClick(task)}
                                         )
                                     }
                                 }
@@ -160,80 +165,6 @@ fun TaskListScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun DrawerContent(
-    onPomodoroClick: () -> Unit,
-    onLogoutClick: () -> Unit,
-    onTaskListClick: () -> Unit,
-    onDoneTaskListClick: () -> Unit,
-    onCalendarClick: () -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        item {
-            DrawerTaskItem(
-                title = "Task List",
-                onClick = onTaskListClick
-            )
-        }
-        item {
-            DrawerTaskItem(
-                title = "Pomodoro counter",
-                onClick = onPomodoroClick
-            )
-        }
-        item{
-            DrawerTaskItem(
-                title = "Done tasks list",
-                onClick = onDoneTaskListClick
-            )
-        }
-        item{
-            DrawerTaskItem(
-                title = "Calendar",
-                onClick = onCalendarClick
-            )
-        }
-        item {
-            DrawerTaskItem(
-                title = "Log out",
-                onClick = onLogoutClick
-            )
-        }
-    }
-}
-
-@Composable
-fun DrawerTaskItem(
-    title: String,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .border(
-                width = 2.dp,
-                color = Color(0xFF8B7E74),
-                shape = MaterialTheme.shapes.medium
-            )
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(16.dp)
-            .clickable { onClick() }
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            color = Color(0xFF8B7E74),
-            fontSize = 16.sp,
-            modifier = Modifier.align(Alignment.CenterStart)
-        )
     }
 }
 

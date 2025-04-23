@@ -53,6 +53,16 @@ class TaskRepository @Inject constructor(
             return firebaseService.updateTask(taskId, completed)
         }
 
+    suspend fun updateTask(task: Task): Task? {
+        return suspendCoroutine { cont ->
+            firebaseService.updateTask(task) { updated ->
+                if (updated != null) cont.resume(updated)
+                else cont.resumeWithException(Exception("Full update failed"))
+            }
+        }
+    }
+
+
     suspend fun deleteTask(taskId: String): Boolean {
         return firebaseService.deleteTask(taskId)
     }

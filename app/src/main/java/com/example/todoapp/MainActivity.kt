@@ -3,6 +3,8 @@ package com.example.todoapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -10,10 +12,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.todoapp.data.firebase.FirebaseService
+import com.example.todoapp.domain.state.TaskState
 import com.example.todoapp.presentation.ui.auth.LoginScreen
 import com.example.todoapp.presentation.ui.auth.RegisterScreen
 import com.example.todoapp.presentation.ui.calendar.CalendarScreen
@@ -48,18 +53,45 @@ class MainActivity : ComponentActivity() {
 
             val state by viewModel.state.collectAsState()
 
-
             NavHost(
                 navController = navController,
                 startDestination = if (isUserLoggedIn) "taskList" else "login"
             ) {
-                composable("login") {
+                composable(
+                    "login",
+                    enterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { -it },
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(300))
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = tween(300)
+                        ) + fadeOut(animationSpec = tween(300))
+                    }
+                ) {
                     LoginScreen(
                         navController = navController,
                         onLoginSuccess = { isUserLoggedIn = true }
                     )
                 }
-                composable("register") {
+                composable(
+                    "register",
+                    enterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(300))
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = tween(300)
+                        ) + fadeOut(animationSpec = tween(300))
+                    }
+                ) {
                     RegisterScreen(
                         navController = navController,
                         onRegisterSuccess = {
@@ -67,7 +99,21 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 }
-                composable("taskList") {
+                composable(
+                    "taskList",
+                    enterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(300))
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = tween(300)
+                        ) + fadeOut(animationSpec = tween(300))
+                    }
+                ) {
                     TaskListScreen(
                         navController = navController,
                         onPomodoroClick = { navController.navigate("pomodoro") },
@@ -79,20 +125,59 @@ class MainActivity : ComponentActivity() {
                         },
                         onAddTaskClick = { navController.navigate("addTask") },
                         onDoneTaskListClick = {navController.navigate("doneTaskList")},
-                        onCalendarClick = {navController.navigate("calendar")}
+                        onCalendarClick = {navController.navigate("calendar")},
+                        onTaskEditClick = {task ->navController.navigate("addTask?taskId=${task.id}")}
                     )
                 }
 
-                composable("addTask") {
+                composable(
+                    route = "addTask?taskId={taskId}",
+                    arguments = listOf(navArgument("taskId") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    }),
+                    enterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(300))
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = tween(300)
+                        ) + fadeOut(animationSpec = tween(300))
+                    }
+                ) { backStackEntry ->
+                    val taskId = backStackEntry.arguments?.getString("taskId") ?: ""
+                    val taskViewModel: TaskViewModel = hiltViewModel()
+                    val taskState by taskViewModel.state.collectAsState()
+                    val existingTask = (taskState as? TaskState.TasksLoaded)?.let { it.activeTasks + it.completedTasks }
+                        ?.find { it.id == taskId }
+
                     AddTaskScreen(
-                        onSaveTask = {
-                            navController.popBackStack()
-                        },
-                        firebaseService = firebaseService
+                        onSaveTask = { navController.popBackStack() },
+                        viewModel = taskViewModel,
+                        firebaseService = firebaseService,
+                        existingTask = existingTask
                     )
                 }
 
-                composable("pomodoro") {
+                composable(
+                    "pomodoro",
+                    enterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(300))
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = tween(300)
+                        ) + fadeOut(animationSpec = tween(300))
+                    }
+                ) {
                     PomodoroTimerScreen(
                         onPomodoro = {  },
                         onLogout = { isUserLoggedIn = false
@@ -105,7 +190,21 @@ class MainActivity : ComponentActivity() {
                         onCalendarClick = {navController.navigate("calendar")}
                     )
                 }
-                composable("doneTaskList") {
+                composable(
+                    "doneTaskList",
+                    enterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(300))
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = tween(300)
+                        ) + fadeOut(animationSpec = tween(300))
+                    }
+                ) {
                     DoneTaskListScreen(
                         navController = navController,
                         onPomodoroClick = { navController.navigate("pomodoro") },
@@ -121,11 +220,33 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 composable(
-                    route = "calendar",
+                    "calendar",
+                    enterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(300))
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = tween(300)
+                        ) + fadeOut(animationSpec = tween(300))
+                    }
                 ) {
                     CalendarScreen(
                         onAddTaskClick = { navController.navigate("addTask") },
-                        firebaseService = firebaseService
+                        firebaseService = firebaseService,
+                        onPomodoroClick = { navController.navigate("pomodoro") },
+                        onLogout = {
+                            isUserLoggedIn = false
+                            navController.navigate("login") {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        },
+                        onTaskListClick = { navController.navigate("taskList") },
+                        onDoneTaskListClick = { navController.navigate("doneTaskList") },
+                        onCalendarClick = { navController.navigate("calendar") }
                     )
                 }
             }

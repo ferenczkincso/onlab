@@ -88,6 +88,36 @@ class TaskViewModel @Inject constructor(
         }
     }
 
+    fun updateTask(task: Task) {
+        viewModelScope.launch {
+            try {
+                taskRepository.updateTask(task)
+                val currentState = _state.value
+                if (currentState is TaskState.TasksLoaded) {
+                    val updatedActiveTasks = currentState.activeTasks.toMutableList()
+                    val updatedCompletedTasks = currentState.completedTasks.toMutableList()
+                    
+                    // Remove the task from both lists
+                    updatedActiveTasks.removeIf { it.id == task.id }
+                    updatedCompletedTasks.removeIf { it.id == task.id }
+                    
+                    // Add it to the appropriate list based on completion status
+                    if (task.completed) {
+                        updatedCompletedTasks.add(task)
+                    } else {
+                        updatedActiveTasks.add(task)
+                    }
+                    
+                    _state.value = TaskState.TasksLoaded(
+                        activeTasks = updatedActiveTasks,
+                        completedTasks = updatedCompletedTasks
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("TaskViewModel", "Error while updating task: ${e.message}")
+            }
+        }
+    }
 
     private fun updateTaskStatus(taskId: String, completed: Boolean) {
         viewModelScope.launch {
@@ -103,7 +133,6 @@ class TaskViewModel @Inject constructor(
             }
         }
     }
-
 
     private fun loadTasks() {
         viewModelScope.launch {
@@ -135,4 +164,6 @@ class TaskViewModel @Inject constructor(
             null
         }
     }
+
+
 }

@@ -23,10 +23,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.todoapp.data.firebase.FirebaseService
 import com.example.todoapp.data.model.Priority
 import com.example.todoapp.data.model.Task
+import com.example.todoapp.presentation.ui.MenuDrawer
+import com.example.todoapp.presentation.ui.task.TaskListHeader
 import com.example.todoapp.presentation.ui.theme.customBlue
 import com.example.todoapp.presentation.ui.theme.customBlueLight
 import com.example.todoapp.presentation.ui.theme.customTypography
 import com.example.todoapp.presentation.viewmodel.CalendarViewModel
+import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -42,11 +45,20 @@ fun CalendarScreen(
     viewModel: CalendarViewModel = hiltViewModel(),
     firebaseService: FirebaseService,
     onAddTaskClick: () -> Unit,
+    onPomodoroClick: () -> Unit,
+    onLogout: () -> Unit,
+    onTaskListClick: () -> Unit,
+    onDoneTaskListClick: () -> Unit,
+    onCalendarClick: () -> Unit
 ) {
     val tasks by viewModel.tasks.collectAsState(initial = emptyList())
     val selectedDate by viewModel.selectedDate.collectAsState()
     val error by viewModel.error.collectAsState()
     val currentDate = remember { LocalDate.now() }
+    
+    var showDialog by remember { mutableStateOf(false) }
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
     
     val datesWithTasks = remember(tasks) {
         tasks.mapNotNull { task -> 
@@ -84,160 +96,212 @@ fun CalendarScreen(
             .toList()
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddTaskClick,
-                shape = CircleShape,
-                contentColor = Color.White,
-                containerColor = Color(0xFF65647C),
-                modifier = Modifier
-                    .padding(16.dp)
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Task")
-            }
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            // Error message
-            error?.let { errorMessage ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = errorMessage,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(onClick = { viewModel.clearError() }) {
-                            Text("×", style = MaterialTheme.typography.titleLarge)
+    MaterialTheme(
+        typography = customTypography,
+    ) {
+        Surface(modifier = Modifier.fillMaxSize(),
+            color = Color(0xFFFFFFFF)) {
+            if (showDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDialog = false },
+                    title = { Text(text = "Confirm logout") },
+                    text = { Text("Are you sure you want to log out?") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                showDialog = false
+                                onLogout()
+                            },
+                            colors = ButtonDefaults.buttonColors(Color.DarkGray)
+                        ) {
+                            Text("Yes")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showDialog = false },
+                            colors = ButtonDefaults.buttonColors(Color.DarkGray)
+                        ) {
+                            Text("No")
                         }
                     }
-                }
+                )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
-                    Text("←", style = customTypography.titleLarge, color= customBlue)
+            ModalNavigationDrawer(
+                drawerState = drawerState,
+                scrimColor = MaterialTheme.colorScheme.surface.copy(alpha = 1f),
+                drawerContent = {
+                    MenuDrawer(
+                        onPomodoroClick = onPomodoroClick,
+                        onLogoutClick = { showDialog = true },
+                        onTaskListClick = onTaskListClick,
+                        onDoneTaskListClick = onDoneTaskListClick,
+                        onCalendarClick = { scope.launch { drawerState.close() } }
+                    )
                 }
-                Text(
-                    text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
-                    style = customTypography.titleLarge,
-                    color= customBlue,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) {
-                    Text("→", style = customTypography.titleLarge, color= customBlue)
-                }
-            }
-            
-            // Calendar container
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFFFFF)
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 2.dp
-                )
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                ) {
-                    // Weekday headers
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-                        daysOfWeek.forEach { day ->
-                            Text(
-                                text = day,
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Center,
-                                style = customTypography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = customBlue
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // Calendar grid
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        daysInMonth.chunked(7).forEach { week ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                                week.forEach { date ->
-                                    Day(
-                                        date = date,
-                                        isCurrentMonth = date.month == currentMonth.month,
-                                        isSelected = date == (selectedDate ?: currentDate),
-                                        isToday = date == currentDate,
-                                        hasTask = datesWithTasks.contains(date),
-                                        onDateSelected = { viewModel.setSelectedDate(date) }
-                                    )
+                Column(modifier = Modifier.fillMaxSize()) {
+                    TaskListHeader(onDrawerOpen = { scope.launch { drawerState.open() } })
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Scaffold(
+                            modifier = modifier.fillMaxSize(),
+                            floatingActionButton = {
+                                FloatingActionButton(
+                                    onClick = onAddTaskClick,
+                                    shape = CircleShape,
+                                    contentColor = Color.White,
+                                    containerColor = Color(0xFF65647C),
+                                    modifier = Modifier
+                                        .padding(16.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add Task")
                                 }
                             }
-                        }
-                    }
-                }
-            }
-            
-            selectedDate?.let { date ->
-                val tasksForSelectedDate = tasks.filter { task ->
-                    try {
-                        task.dueDate?.toDate()?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate() == date
-                    } catch (e: Exception) {
-                        false
-                    }
-                }
-                
-                if (tasksForSelectedDate.isNotEmpty()) {
-                    Text(
-                        text = "Tasks for ${date.format(java.time.format.DateTimeFormatter.ofPattern("MMMM d, yyyy"))}",
-                        style = customTypography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = customBlue,
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    )
-                    
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(tasksForSelectedDate) { task ->
-                            TaskCard(task = task)
+                        ) { padding ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(16.dp)
+                            ) {
+                                // Error message
+                                error?.let { errorMessage ->
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 8.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = MaterialTheme.colorScheme.errorContainer
+                                        )
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(8.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = errorMessage,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            IconButton(onClick = { viewModel.clearError() }) {
+                                                Text("×", style = MaterialTheme.typography.titleLarge)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
+                                        Text("←", style = customTypography.titleLarge, color= customBlue)
+                                    }
+                                    Text(
+                                        text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
+                                        style = customTypography.titleLarge,
+                                        color= customBlue,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) {
+                                        Text("→", style = customTypography.titleLarge, color= customBlue)
+                                    }
+                                }
+                                
+                                // Calendar container
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFFFFFFFF)
+                                    ),
+                                    elevation = CardDefaults.cardElevation(
+                                        defaultElevation = 2.dp
+                                    )
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(8.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceEvenly
+                                        ) {
+                                            val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                                            daysOfWeek.forEach { day ->
+                                                Text(
+                                                    text = day,
+                                                    modifier = Modifier.weight(1f),
+                                                    textAlign = TextAlign.Center,
+                                                    style = customTypography.bodyMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = customBlue
+                                                )
+                                            }
+                                        }
+                                        
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        
+                                        // Calendar grid
+                                        Column(modifier = Modifier.fillMaxWidth()) {
+                                            daysInMonth.chunked(7).forEach { week ->
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                                ) {
+                                                    week.forEach { date ->
+                                                        Day(
+                                                            date = date,
+                                                            isCurrentMonth = date.month == currentMonth.month,
+                                                            isSelected = date == (selectedDate ?: currentDate),
+                                                            isToday = date == currentDate,
+                                                            hasTask = datesWithTasks.contains(date),
+                                                            onDateSelected = { viewModel.setSelectedDate(date) }
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                selectedDate?.let { date ->
+                                    val tasksForSelectedDate = tasks.filter { task ->
+                                        try {
+                                            task.dueDate?.toDate()?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate() == date
+                                        } catch (e: Exception) {
+                                            false
+                                        }
+                                    }
+                                    
+                                    if (tasksForSelectedDate.isNotEmpty()) {
+                                        Text(
+                                            text = "Tasks for ${date.format(java.time.format.DateTimeFormatter.ofPattern("MMMM d, yyyy"))}",
+                                            style = customTypography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = customBlue,
+                                            modifier = Modifier.padding(vertical = 16.dp)
+                                        )
+                                        
+                                        LazyColumn(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            items(tasksForSelectedDate) { task ->
+                                                TaskCard(task = task)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

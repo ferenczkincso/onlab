@@ -139,4 +139,24 @@ class FirebaseService @Inject constructor(
             false
         }
     }
+
+    fun updateTask(task: Task, callback: (Task?) -> Unit) {
+        val tasksCollection = userTasksCollection() ?: run {
+            Log.e("FirebaseService", "No user logged in")
+            callback(null)
+            return
+        }
+        tasksCollection
+            .document(task.id)
+            .set(task)
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Task updated fully: ${task.id}")
+                callback(task)
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error in full update", e)
+                callback(null)
+            }
+    }
+
 }

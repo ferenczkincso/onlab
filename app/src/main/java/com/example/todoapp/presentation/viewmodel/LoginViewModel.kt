@@ -102,7 +102,6 @@ class LoginViewModel @Inject constructor(
             }
         }
     }
-
     private fun logout() {
         firebaseService.auth.signOut()
         googleSignInClient.signOut()

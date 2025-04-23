@@ -6,4 +6,3 @@ sealed class LoginState {
     object Loading : LoginState()
     data class LoggingError(val message: String) : LoginState()
 }
-

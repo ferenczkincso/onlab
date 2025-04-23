@@ -39,18 +39,20 @@ import java.util.Locale
 fun TaskItem(
     task: Task,
     onTaskCompleteToggle: (Task) -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onEditClick:(Task) -> Unit
 ) {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     val formattedDate = task.dueDate?.toDate()?.let { dateFormat.format(it) } ?: "No due date"
 
     Card(
+        onClick = { onEditClick(task) },
         colors = CardColors(
             containerColor = when (task.priority) {
                 Priority.HIGH -> Color(0xFF8B7E74)
                 Priority.MEDIUM -> Color(0xFFC7BCA1)
                 Priority.LOW -> Color(0xFFF1D3B3)
-                else -> Color(0xFFe6e1d5)
+                Priority.NONE -> Color(0xFFe6e1d5)
             },
             contentColor = Color.White,
             disabledContainerColor = Color.White,
@@ -137,7 +139,8 @@ fun TaskItemPreview() {
     TaskItem(
         task = sampleTask,
         onTaskCompleteToggle = {},
-        onDeleteClick = { }
+        onDeleteClick = { },
+        onEditClick = {}
     )
 }
 
